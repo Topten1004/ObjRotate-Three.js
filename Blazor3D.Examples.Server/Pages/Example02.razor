@@ -1,0 +1,204 @@
+﻿@page "/example02"
+@implements IDisposable
+
+<h3>Example02</h3>
+
+<div>
+    This example shows how to:
+    <ul>
+        <li>Control the Blazor3D Viewer component's dimensions with CSS and HTML element style</li>
+        <li>Add user-defined scene and lights</li>
+        <li>Import obj, Collada, Fbx, Gltf or Stl model on button click asyncronously</li>
+        <li>Control loaded object by its uuid with ObjectLoaded event</li>
+        <li>Import file when all required JS modules already loaded (inital load)</li>
+    </ul>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-10" style="height:750px;">
+        <Viewer @ref="View3D1" Scene=scene />
+    </div>
+    <div class="col-2">
+        <p><button class="btn btn-primary" @onclick="OnLoadObjButtonClick">Load OBJ</button> </p>
+        <p><button class="btn btn-primary" @onclick="OnLoadObjNoTexturesButtonClick">Load OBJ w/o texture</button> </p>
+        <p><button class="btn btn-primary" @onclick="OnLoadColladaButtonClick">Load Collada</button> </p>
+        <p><button class="btn btn-primary" @onclick="OnLoadFbxButtonClick">Load Fbx</button> </p>
+        <p><button class="btn btn-primary" @onclick="OnLoadGltfButtonClick">Load Gltf</button> </p>
+        <p><button class="btn btn-primary" @onclick="OnLoadStlButtonClick">Load Stl</button> </p>
+        <hr />
+        <p><button class="btn btn-primary" @onclick="OnClearAllClick">Clear Scene</button> </p>
+        <p><button class="btn btn-primary" @onclick="OnDeleteLast">Delete Last</button> </p>
+    </div>
+
+    <div>@msg</div>
+</div>
+
+@code {
+    private Viewer View3D1 = null!;
+    private Scene scene = new Scene();
+    private Guid loadedObjectGuid = Guid.NewGuid();
+    private string msg = string.Empty;
+
+    public void Dispose()
+    {
+        View3D1.ObjectLoaded -= OnObjectLoaded;
+        View3D1.JsModuleLoaded -= OnJsModuleLoaded;
+    }
+
+    protected override Task OnInitializedAsync()
+    {
+        AddLights();
+        return base.OnInitializedAsync();
+    }
+
+    private void AddLights(){
+        scene.Add(new AmbientLight());
+        scene.Add(new PointLight()
+            {
+                Intensity = 0.5f,
+                Position = new Vector3(100, 200, 100)
+            });
+        scene.Add(new PointLight()
+            {
+                Intensity = 1f,
+                Position = new Vector3(5, 5, 5)
+            });
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // subscribe events only once
+            View3D1.ObjectLoaded += OnObjectLoaded;
+            View3D1.JsModuleLoaded += OnJsModuleLoaded;
+        }
+
+        return base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task OnJsModuleLoaded()
+    {
+        var settings = new ImportSettings
+            {
+                Format = Import3DFormats.Gltf,
+                FileURL = "/assets/blazor3d.glb",
+            };
+        loadedObjectGuid = await View3D1.Import3DModelAsync(settings);
+        await View3D1.SetCameraPositionAsync(new Vector3(0, 0, 1), new Vector3(0, 0, 0));
+    }
+
+    private async Task OnLoadObjButtonClick()
+    {
+        // if you need to control the loaded object uuid, generate it here.
+        loadedObjectGuid = Guid.NewGuid();
+        var settings = new ImportSettings
+            {
+                Format = Import3DFormats.Obj,//choose appropriate format
+                //FileURL = "https://threejs.org/examples/models/obj/male02/male02.obj",// link to your model file
+                FileURL = "/assets/Semi_trailer.obj",
+                //TextureURL = "https://threejs.org/examples/textures/uv_grid_opengl.jpg", // link to the texture or skip this,
+                Uuid = loadedObjectGuid //// skip this, or set null if you don't care the uuid of loaded mesh or group
+            };
+        await View3D1.Import3DModelAsync(settings);
+
+        // set camera position to view your loaded model
+        await View3D1.SetCameraPositionAsync(
+            new Vector3(0, 100, 150),// camera position
+            new Vector3(0, 0, 0));// optional camera target
+    }
+
+    private async Task OnLoadObjNoTexturesButtonClick()
+    {
+        var settings = new ImportSettings
+            {
+                Format = Import3DFormats.Obj,
+             //   FileURL = "https://threejs.org/examples/models/obj/male02/male02.obj",
+                FileURL = "/assets/Semi_trailer.obj",
+
+            };
+        // Also you can get the uuid of object to be imported before its loaded completely
+        loadedObjectGuid = await View3D1.Import3DModelAsync(settings);
+        await View3D1.SetCameraPositionAsync(new Vector3(0, 100, 250), new Vector3(0, 50, 0));
+    }
+
+    private async Task OnLoadColladaButtonClick()
+    {
+        var settings = new ImportSettings
+            {
+                Format = Import3DFormats.Collada,
+                FileURL = "https://threejs.org/examples/models/collada/elf/elf.dae",
+            };
+        loadedObjectGuid = await View3D1.Import3DModelAsync(settings);
+        await View3D1.SetCameraPositionAsync(new Vector3(0, 5, 10), new Vector3(0, 3, 0));
+    }
+
+    private async Task OnLoadFbxButtonClick()
+    {
+        var settings = new ImportSettings
+            {
+                Format = Import3DFormats.Fbx,
+                FileURL = "https://threejs.org/examples/models/fbx/Samba%20Dancing.fbx",
+            };
+        loadedObjectGuid = await View3D1.Import3DModelAsync(settings);
+
+        await View3D1.SetCameraPositionAsync(new Vector3(0, 100, 250), new Vector3(0, 50, 0));
+    }
+
+    private async Task OnLoadGltfButtonClick()
+    {
+        var settings = new ImportSettings
+            {
+                Format = Import3DFormats.Gltf,
+                FileURL = "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf",
+            };
+        loadedObjectGuid = await View3D1.Import3DModelAsync(settings);
+        await View3D1.SetCameraPositionAsync(new Vector3(0, 1, 5), new Vector3(0, 0.5f, 0));
+    }
+    private async Task OnLoadStlButtonClick()
+    {
+        var settings = new ImportSettings
+            {
+                Format = Import3DFormats.Stl,
+                FileURL = "https://threejs.org/examples/models/stl/ascii/slotted_disk.stl",
+            };
+        loadedObjectGuid = await View3D1.Import3DModelAsync(settings);
+        await View3D1.SetCameraPositionAsync(new Vector3(0, 3, 3), new Vector3(0, 1, 0));
+    }
+
+    private Task OnObjectLoaded(Object3DArgs e)
+    {
+        // After object is loaded to component scene, you can locate it's C# clone in the scene.Children
+        // At the moment, only  Object3D.Uuid and Object3D.Type properties are syncronized.
+        foreach (var item in scene.Children)
+        {
+            if (item.Uuid == e.UUID)
+            {
+                this.msg = $"loaded object with id = {e.UUID} and type {item.Type}. Initial guid was {loadedObjectGuid}";
+                StateHasChanged();
+                break;
+            }
+        }
+        return Task.CompletedTask;
+    }
+
+    // this one clears scene completely. it removes all items: lights, helpers, meshes, etc.
+    private async Task OnClearAllClick()
+    {
+        await View3D1.ClearSceneAsync();
+        AddLights();
+        await View3D1.UpdateScene();
+    }
+
+    // this one removes last item in scene.Children collection.
+    // notice, that first two items are lights
+    private async Task OnDeleteLast()
+    {
+        if (scene.Children.Count > 0)
+        {
+            var last = scene.Children.Last();
+            // removes item by its unique identifier
+            await View3D1.RemoveByUuidAsync(last.Uuid);
+        }
+    }
+}
