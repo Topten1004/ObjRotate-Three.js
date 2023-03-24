@@ -56,12 +56,12 @@
         scene.Add(new PointLight()
             {
                 Intensity = 0.5f,
-                Position = new Vector3(100, 200, 100)
+                Position = new Vector3(1, 0, 0)
             });
         scene.Add(new PointLight()
             {
                 Intensity = 1f,
-                Position = new Vector3(5, 5, 5)
+                Position = new Vector3(10, 0, 0)
             });
     }
 
@@ -82,10 +82,10 @@
         var settings = new ImportSettings
             {
                 Format = Import3DFormats.Gltf,
-                FileURL = "/assets/blazor3d.glb",
+                FileURL = "/assets/tractor trail.glb",
             };
         loadedObjectGuid = await View3D1.Import3DModelAsync(settings);
-        await View3D1.SetCameraPositionAsync(new Vector3(0, 0, 1), new Vector3(0, 0, 0));
+        await View3D1.SetCameraPositionAsync(new Vector3(-8, 0, 0), new Vector3(0, 0, 0));
     }
 
     private async Task OnLoadObjButtonClick()
@@ -103,9 +103,7 @@
         await View3D1.Import3DModelAsync(settings);
 
         // set camera position to view your loaded model
-        await View3D1.SetCameraPositionAsync(
-            new Vector3(0, 100, 150),// camera position
-            new Vector3(0, 0, 0));// optional camera target
+        await View3D1.SetCameraPositionAsync(new Vector3(-8, 0, 0), new Vector3(0, 0, 0));
     }
 
     private async Task OnLoadObjNoTexturesButtonClick()
